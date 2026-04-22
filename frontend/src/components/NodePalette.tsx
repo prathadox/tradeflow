@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { NodeKind } from "../store/graphStore";
 import { accentTileStyle } from "../nodes/nodeStyles";
+import Input from "../ui/Input";
 
 export interface PaletteItem {
   kind: NodeKind;
@@ -38,9 +39,6 @@ const GROUP_BY_KIND: Record<NodeKind, PaletteGroupKey> = {
   action: "Actions",
 };
 
-// Empty asset defaults — no hardcoded XLM/USDC. Strategy also has no
-// pre-filled `pair`; it's derived from connected Asset nodes via
-// baseAssetId/quoteAssetId, with the `pair` field as a fallback override.
 const ITEMS: PaletteItemWithIcon[] = [
   {
     kind: "trigger",
@@ -93,12 +91,12 @@ export const PALETTE_ITEMS: PaletteItem[] = ITEMS.map(
 );
 
 const groupLabelStyle: React.CSSProperties = {
-  fontSize: "10px",
+  fontSize: 10,
   fontWeight: 600,
-  color: "#71717a",
+  color: "var(--text-muted)",
   textTransform: "uppercase",
-  letterSpacing: "0.8px",
-  paddingLeft: "4px",
+  letterSpacing: "0.9px",
+  paddingLeft: 4,
 };
 
 export default function NodePalette() {
@@ -141,46 +139,24 @@ export default function NodePalette() {
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        padding: "16px",
-        gap: "20px",
+        padding: 16,
+        gap: 20,
       }}
     >
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        <Search
-          size={14}
-          style={{
-            position: "absolute",
-            left: "12px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "#a1a1aa",
-          }}
-        />
-        <input
-          placeholder="Search nodes…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px 12px 8px 34px",
-            border: "1px solid #e4e4e7",
-            borderRadius: "6px",
-            backgroundColor: "#ffffff",
-            color: "#09090b",
-            fontSize: "13px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
+      <Input
+        placeholder="Search nodes…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        leadingAdornment={<Search size={13} />}
+      />
 
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "20px",
+          gap: 20,
           overflowY: "auto",
-          paddingBottom: "32px",
+          paddingBottom: 32,
           scrollbarWidth: "none",
           msOverflowStyle: "none",
         }}
@@ -192,7 +168,7 @@ export default function NodePalette() {
           return (
             <div
               key={group}
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+              style={{ display: "flex", flexDirection: "column", gap: 10 }}
             >
               <div style={groupLabelStyle}>{group}</div>
 
@@ -200,7 +176,7 @@ export default function NodePalette() {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px",
+                  gap: 6,
                 }}
               >
                 {items.map((item) => {
@@ -213,42 +189,44 @@ export default function NodePalette() {
                       onDragStart={(e) => onDragStart(e, item)}
                       title="Drag onto canvas"
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f4f4f5";
+                        e.currentTarget.style.backgroundColor = "var(--bg-hover)";
+                        e.currentTarget.style.borderColor = "var(--border-strong)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#ffffff";
+                        e.currentTarget.style.backgroundColor = "var(--bg-panel)";
+                        e.currentTarget.style.borderColor = "var(--border)";
                       }}
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "12px",
-                        padding: "10px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #e4e4e7",
-                        borderRadius: "8px",
+                        gap: 12,
+                        padding: 10,
+                        background: "var(--bg-panel)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
                         cursor: "grab",
                         transition:
-                          "background-color 0.15s ease, border-color 0.15s ease",
+                          "background-color var(--dur-fast), border-color var(--dur-fast)",
                       }}
                     >
-                      <div style={accentTileStyle(item.kind, 32)}>
-                        <Icon size={16} strokeWidth={2} />
+                      <div style={accentTileStyle(item.kind, 30)}>
+                        <Icon size={15} strokeWidth={2} />
                       </div>
 
                       <div
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "2px",
+                          gap: 1,
                           overflow: "hidden",
                         }}
                       >
                         <div
                           style={{
-                            fontSize: "13px",
+                            fontSize: 12.5,
                             fontWeight: 600,
-                            color: "#09090b",
-                            letterSpacing: "-0.2px",
+                            color: "var(--text)",
+                            letterSpacing: "-0.1px",
                             whiteSpace: "nowrap",
                             textOverflow: "ellipsis",
                             overflow: "hidden",
@@ -258,9 +236,9 @@ export default function NodePalette() {
                         </div>
                         <div
                           style={{
-                            fontSize: "11px",
+                            fontSize: 11,
                             fontWeight: 400,
-                            color: "#a1a1aa",
+                            color: "var(--text-dim)",
                             whiteSpace: "nowrap",
                             textOverflow: "ellipsis",
                             overflow: "hidden",

@@ -35,18 +35,20 @@ const triggerStyle = (open: boolean, disabled: boolean): CSSProperties => ({
   alignItems: "center",
   justifyContent: "space-between",
   gap: 8,
-  padding: "8px 10px",
-  border: `1px solid ${open ? "#09090b" : "#e4e4e7"}`,
-  borderRadius: 6,
-  backgroundColor: disabled ? "#fafafa" : "#ffffff",
-  color: disabled ? "#a1a1aa" : "#09090b",
+  height: 34,
+  padding: "0 10px",
+  border: `1px solid ${open ? "var(--accent)" : "var(--border)"}`,
+  borderRadius: "var(--radius-sm)",
+  backgroundColor: disabled ? "var(--bg-panel)" : "var(--bg-sunken)",
+  color: disabled ? "var(--text-dim)" : "var(--text)",
   fontSize: 13,
   cursor: disabled ? "not-allowed" : "pointer",
   outline: "none",
-  transition: "border-color 0.12s ease",
+  transition: "border-color var(--dur-fast), background-color var(--dur-fast)",
   textAlign: "left",
   boxSizing: "border-box",
   fontFamily: "inherit",
+  boxShadow: open ? "0 0 0 3px var(--accent-ring)" : "none",
 });
 
 const menuStyle = (top: number, left: number, width: number): CSSProperties => ({
@@ -57,11 +59,12 @@ const menuStyle = (top: number, left: number, width: number): CSSProperties => (
   maxHeight: 280,
   overflowY: "auto",
   padding: 4,
-  backgroundColor: "#ffffff",
-  border: "1px solid #e4e4e7",
-  borderRadius: 8,
-  boxShadow: "0 8px 24px rgba(9,9,11,0.10)",
+  backgroundColor: "var(--bg-elev)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--shadow-pop)",
   zIndex: 120,
+  animation: "flowpay-fade-in 140ms var(--ease-out)",
 });
 
 const optionStyle = (active: boolean, selected: boolean, disabled: boolean): CSSProperties => ({
@@ -69,19 +72,19 @@ const optionStyle = (active: boolean, selected: boolean, disabled: boolean): CSS
   alignItems: "center",
   justifyContent: "space-between",
   gap: 8,
-  padding: "7px 10px",
-  borderRadius: 6,
+  padding: "8px 10px",
+  borderRadius: "var(--radius-xs)",
   fontSize: 13,
-  color: disabled ? "#a1a1aa" : "#09090b",
-  backgroundColor: active ? "#f4f4f5" : "transparent",
+  color: disabled ? "var(--text-dim)" : "var(--text)",
+  backgroundColor: active ? "var(--bg-hover)" : "transparent",
   cursor: disabled ? "not-allowed" : "pointer",
   fontWeight: selected ? 600 : 400,
 });
 
 const hintStyle: CSSProperties = {
   fontSize: 11,
-  color: "#a1a1aa",
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  color: "var(--text-dim)",
+  fontFamily: "var(--font-mono)",
 };
 
 export default function Select({
@@ -207,12 +210,12 @@ export default function Select({
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            color: selected ? "#09090b" : "#a1a1aa",
+            color: selected ? "var(--text)" : "var(--text-dim)",
           }}
         >
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown size={14} strokeWidth={2} color="#71717a" />
+        <ChevronDown size={14} strokeWidth={2} color="var(--text-muted)" />
       </button>
 
       {open &&
@@ -227,7 +230,7 @@ export default function Select({
                 style={{
                   padding: "10px 12px",
                   fontSize: 12.5,
-                  color: "#a1a1aa",
+                  color: "var(--text-dim)",
                 }}
               >
                 No options

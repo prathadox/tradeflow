@@ -2,6 +2,7 @@ import express from "express";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { workflowsRouter, runsRouter } from "./routes/workflows.js";
+import { waitlistRouter } from "./routes/waitlist.js";
 import { pingDb } from "./db/client.js";
 
 try {
@@ -39,6 +40,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/workflows", workflowsRouter);
 app.use("/runs", runsRouter);
+app.use("/waitlist", waitlistRouter);
 
 app.use(
   (

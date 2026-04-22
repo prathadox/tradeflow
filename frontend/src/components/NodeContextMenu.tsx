@@ -10,31 +10,33 @@ export interface ContextMenuState {
 
 const menuStyle: CSSProperties = {
   position: "fixed",
-  backgroundColor: "#ffffff",
-  border: "1px solid #e4e4e7",
-  borderRadius: 6,
-  boxShadow: "0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)",
+  background: "var(--bg-elev)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--shadow-pop)",
   padding: 4,
-  minWidth: 150,
+  minWidth: 160,
   zIndex: 1000,
   display: "flex",
   flexDirection: "column",
   gap: 1,
+  animation: "flowpay-fade-in 140ms var(--ease-out)",
 };
 
 const itemStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  padding: "6px 10px",
-  borderRadius: 4,
+  padding: "8px 10px",
+  borderRadius: "var(--radius-xs)",
   cursor: "pointer",
   fontSize: 13,
-  color: "#09090b",
+  color: "var(--text)",
   border: "none",
   background: "transparent",
   width: "100%",
   textAlign: "left",
+  fontFamily: "inherit",
 };
 
 export default function NodeContextMenu({
@@ -66,7 +68,7 @@ export default function NodeContextMenu({
   }, [onClose]);
 
   const hover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.backgroundColor = "#f4f4f5";
+    e.currentTarget.style.backgroundColor = "var(--bg-hover)";
   };
   const unhover = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.style.backgroundColor = "transparent";
@@ -88,7 +90,7 @@ export default function NodeContextMenu({
           onClose();
         }}
       >
-        <Copy size={14} strokeWidth={2} color="#3f3f46" />
+        <Copy size={14} strokeWidth={2} color="var(--text-muted)" />
         Duplicate
       </button>
       <button
@@ -101,7 +103,7 @@ export default function NodeContextMenu({
           onClose();
         }}
       >
-        <Trash2 size={14} strokeWidth={2} color="#3f3f46" />
+        <Trash2 size={14} strokeWidth={2} color="var(--text-muted)" />
         Delete
       </button>
     </div>

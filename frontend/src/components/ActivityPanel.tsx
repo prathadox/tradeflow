@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Activity, History } from "lucide-react";
+import { Activity, History, Radio, Inbox } from "lucide-react";
 import {
   subscribeEvents,
   listRuns,
@@ -15,60 +15,37 @@ import {
   type RunSummary,
   type StoredEvent,
 } from "../api/events";
+import Tabs from "../ui/Tabs";
+import Badge from "../ui/Badge";
+import EmptyState from "../ui/EmptyState";
 
 const panelStyle: CSSProperties = {
   height: "100%",
   display: "flex",
   flexDirection: "column",
-  backgroundColor: "#ffffff",
+  background: "var(--bg-panel)",
   fontSize: 12.5,
 };
-
-const tabsBar: CSSProperties = {
-  display: "flex",
-  borderBottom: "1px solid #e4e4e7",
-  paddingLeft: 8,
-  paddingRight: 8,
-  gap: 2,
-  flexShrink: 0,
-};
-
-const tabStyle = (active: boolean): CSSProperties => ({
-  padding: "10px 12px",
-  fontSize: 12,
-  fontWeight: 600,
-  color: active ? "#09090b" : "#71717a",
-  borderBottom: active ? "2px solid #09090b" : "2px solid transparent",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  backgroundColor: "transparent",
-  border: "none",
-  letterSpacing: "-0.2px",
-});
 
 const listStyle: CSSProperties = {
   flex: 1,
   overflowY: "auto",
-  padding: "8px 12px",
+  padding: "10px 14px",
   display: "flex",
   flexDirection: "column",
-  gap: 6,
+  gap: 4,
 };
 
-const emptyStyle: CSSProperties = {
-  padding: "20px 12px",
-  fontSize: 12.5,
-  color: "#a1a1aa",
-  textAlign: "center",
-};
+type Kind = LiveEvent["kind"];
 
-const KIND_COLORS: Record<LiveEvent["kind"], { bg: string; dot: string; text: string }> = {
-  tick: { bg: "#f4f4f5", dot: "#a1a1aa", text: "#3f3f46" },
-  decision: { bg: "#eff6ff", dot: "#2563eb", text: "#1e40af" },
-  error: { bg: "#fef2f2", dot: "#dc2626", text: "#991b1b" },
-  info: { bg: "#fafafa", dot: "#52525b", text: "#3f3f46" },
+const KIND_META: Record<
+  Kind,
+  { tone: "neutral" | "violet" | "mint" | "amber" | "red" | "blue"; border: string }
+> = {
+  tick: { tone: "neutral", border: "var(--text-muted)" },
+  decision: { tone: "blue", border: "var(--info)" },
+  error: { tone: "red", border: "var(--danger)" },
+  info: { tone: "violet", border: "var(--accent)" },
 };
 
 function formatTime(ts: number): string {
@@ -77,53 +54,46 @@ function formatTime(ts: number): string {
 }
 
 function EventRow({ e }: { e: LiveEvent }) {
-  const colors = KIND_COLORS[e.kind];
+  const meta = KIND_META[e.kind];
   return (
     <div
       style={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 8,
-        padding: "6px 8px",
-        borderRadius: 6,
-        backgroundColor: colors.bg,
+        gap: 10,
+        padding: "8px 10px",
+        borderRadius: "var(--radius-sm)",
+        background: "var(--bg-sunken)",
+        borderLeft: `2px solid ${meta.border}`,
       }}
     >
       <span
+        className="fp-mono"
         style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          backgroundColor: colors.dot,
-          marginTop: 5,
+          fontSize: 10.5,
+          color: "var(--text-dim)",
           flexShrink: 0,
+          marginTop: 2,
         }}
-      />
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-          <span
-            style={{
-              fontSize: 10,
-              fontFamily:
-                "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-              color: "#a1a1aa",
-              flexShrink: 0,
-            }}
-          >
-            {formatTime(e.ts)}
-          </span>
-          <span
-            style={{
-              fontSize: 12.5,
-              color: colors.text,
-              fontWeight: 500,
-              wordBreak: "break-word",
-            }}
-          >
-            {e.message}
-          </span>
-        </div>
-      </div>
+      >
+        {formatTime(e.ts)}
+      </span>
+      <Badge tone={meta.tone} style={{ fontSize: 9.5, height: 18, padding: "0 6px" }}>
+        {e.kind}
+      </Badge>
+      <span
+        style={{
+          fontSize: 12.5,
+          color: "var(--text)",
+          fontWeight: 450,
+          wordBreak: "break-word",
+          flex: 1,
+          minWidth: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        {e.message}
+      </span>
     </div>
   );
 }
@@ -137,43 +107,61 @@ function RunRow({
   active: boolean;
   onClick: () => void;
 }) {
-  const statusColor =
+  const tone =
     run.status === "running"
-      ? "#2563eb"
+      ? "violet"
       : run.status === "error"
-      ? "#dc2626"
-      : "#52525b";
+      ? "red"
+      : "neutral";
   return (
     <div
       onClick={onClick}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.borderColor = "var(--border-strong)";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.borderColor = "var(--border)";
+      }}
       style={{
-        padding: "8px 10px",
-        borderRadius: 6,
-        border: `1px solid ${active ? "#09090b" : "#e4e4e7"}`,
-        backgroundColor: active ? "#fafafa" : "#ffffff",
+        padding: "10px 12px",
+        borderRadius: "var(--radius-sm)",
+        border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+        background: active ? "var(--accent-soft)" : "var(--bg-panel)",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: 6,
+        transition:
+          "border-color var(--dur-fast), background-color var(--dur-fast)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: "#09090b" }}>
+        <span
+          className="fp-mono"
+          style={{ fontSize: 11.5, fontWeight: 600, color: "var(--text)" }}
+        >
           {formatTime(run.startedAt)}
         </span>
-        <span style={{ fontSize: 11, color: statusColor, fontWeight: 600 }}>
-          {run.status}
-        </span>
+        <Badge tone={tone as "violet" | "red" | "neutral"}>{run.status}</Badge>
       </div>
-      <div style={{ fontSize: 11, color: "#71717a", display: "flex", gap: 8 }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: "var(--text-dim)",
+          display: "flex",
+          gap: 8,
+        }}
+      >
         <span>{run.eventCount} events</span>
-        {run.stoppedAt && <span>· {Math.round((run.stoppedAt - run.startedAt) / 1000)}s</span>}
+        {run.stoppedAt && (
+          <span>· {Math.round((run.stoppedAt - run.startedAt) / 1000)}s</span>
+        )}
       </div>
       {run.errorMessage && (
         <div
           style={{
             fontSize: 11,
-            color: "#991b1b",
+            color: "var(--danger)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -263,10 +251,20 @@ export default function ActivityPanel({ workflowId }: { workflowId: string | nul
   );
 
   const body = !workflowId ? (
-    <div style={emptyStyle}>Save a workflow to see activity.</div>
+    <EmptyState
+      icon={<Inbox size={16} />}
+      title="No workflow selected"
+      body="Save a workflow to stream activity here."
+      compact
+    />
   ) : tab === "live" ? (
     liveEvents.length === 0 ? (
-      <div style={emptyStyle}>Waiting for events…</div>
+      <EmptyState
+        icon={<Radio size={16} />}
+        title="Waiting for events"
+        body="Start the workflow to see ticks, decisions, and errors in real time."
+        compact
+      />
     ) : (
       <div
         ref={listRef}
@@ -287,10 +285,10 @@ export default function ActivityPanel({ workflowId }: { workflowId: string | nul
     <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
       <div
         style={{
-          width: 180,
-          borderRight: "1px solid #e4e4e7",
+          width: 220,
+          borderRight: "1px solid var(--hairline)",
           overflowY: "auto",
-          padding: 8,
+          padding: 10,
           display: "flex",
           flexDirection: "column",
           gap: 6,
@@ -298,7 +296,12 @@ export default function ActivityPanel({ workflowId }: { workflowId: string | nul
         }}
       >
         {runs.length === 0 ? (
-          <div style={emptyStyle}>No runs yet.</div>
+          <EmptyState
+            icon={<History size={16} />}
+            title="No runs yet"
+            body="Start the workflow to record a run."
+            compact
+          />
         ) : (
           runs.map((r) => (
             <RunRow
@@ -310,11 +313,16 @@ export default function ActivityPanel({ workflowId }: { workflowId: string | nul
           ))
         )}
       </div>
-      <div style={{ ...listStyle, padding: "8px 12px" }}>
+      <div style={{ ...listStyle }}>
         {!selectedRunId ? (
-          <div style={emptyStyle}>Pick a run to inspect its events.</div>
+          <EmptyState
+            icon={<History size={16} />}
+            title="Pick a run"
+            body="Select a run on the left to inspect its events."
+            compact
+          />
         ) : historyLiveShape.length === 0 ? (
-          <div style={emptyStyle}>No events in this run.</div>
+          <EmptyState title="No events in this run." compact />
         ) : (
           historyLiveShape.map((e, i) => <EventRow e={e} key={`${e.ts}-${i}`} />)
         )}
@@ -324,16 +332,14 @@ export default function ActivityPanel({ workflowId }: { workflowId: string | nul
 
   return (
     <div style={panelStyle}>
-      <div style={tabsBar}>
-        <button style={tabStyle(tab === "live")} onClick={() => setTab("live")}>
-          <Activity size={12} />
-          Live
-        </button>
-        <button style={tabStyle(tab === "history")} onClick={() => setTab("history")}>
-          <History size={12} />
-          History
-        </button>
-      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        items={[
+          { value: "live", label: "Live", icon: <Activity size={12} /> },
+          { value: "history", label: "History", icon: <History size={12} /> },
+        ]}
+      />
       {body}
     </div>
   );

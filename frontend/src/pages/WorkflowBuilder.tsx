@@ -20,7 +20,7 @@ import {
 import { useGraphStore, type FlowNode } from "../store/graphStore";
 import NodePalette, { type PaletteItem } from "../components/NodePalette";
 import Inspector from "../components/Inspector";
-import TopBar, { type BannerMessage } from "../components/TopBar";
+import TopBar from "../components/TopBar";
 import NodeContextMenu, {
   type ContextMenuState,
 } from "../components/NodeContextMenu";
@@ -84,7 +84,7 @@ function Canvas({
     [addNode, screenToFlowPosition]
   );
 
-  const minimapNodeColor = useCallback((_node: Node) => "#a1a1aa", []);
+  const minimapNodeColor = useCallback((_node: Node) => "#394357", []);
 
   const handleNodeContext = useCallback(
     (e: ReactMouseEvent, node: Node) => {
@@ -102,7 +102,7 @@ function Canvas({
         flex: 1,
         height: "100%",
         position: "relative",
-        background: "#fafafa",
+        background: "var(--bg-canvas)",
       }}
       onDragOver={onDragOver}
       onDrop={onDrop}
@@ -120,36 +120,26 @@ function Canvas({
         deleteKeyCode={["Delete", "Backspace"]}
         fitView
         proOptions={{ hideAttribution: true }}
-        style={{ background: "#fafafa" }}
+        style={{ background: "var(--bg-canvas)" }}
       >
         <Background
           variant={BackgroundVariant.Dots}
-          color="#d4d4d8"
+          color="#2A313E"
           gap={22}
           size={1.4}
-          style={{ background: "#fafafa", opacity: 0.55 }}
+          style={{ background: "var(--bg-canvas)", opacity: 0.6 }}
         />
 
-        <Controls
-          style={{
-            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
-            border: "1px solid #e4e4e7",
-            borderRadius: 6,
-            background: "#ffffff",
-          }}
-        />
+        <Controls />
 
         <MiniMap
           pannable
           zoomable
           nodeColor={minimapNodeColor}
-          nodeStrokeColor="#e4e4e7"
+          nodeStrokeColor="#2A313E"
           nodeStrokeWidth={2}
-          maskColor="rgba(250, 250, 250, 0.85)"
+          maskColor="rgba(11, 13, 18, 0.7)"
           style={{
-            background: "#ffffff",
-            border: "1px solid #e4e4e7",
-            borderRadius: 6,
             width: 180,
             height: 120,
           }}
@@ -160,16 +150,15 @@ function Canvas({
 }
 
 export default function WorkflowBuilder() {
-  const [banner, setBanner] = useState<BannerMessage | null>(null);
   const [ctx, setCtx] = useState<ContextMenuState | null>(null);
   const selectedNodeId = useGraphStore((s) => s.selectedNodeId);
   const workflowId = useGraphStore((s) => s.id);
 
   const sidebarStyle = useMemo<React.CSSProperties>(
     () => ({
-      width: 260,
-      backgroundColor: "#ffffff",
-      borderRight: "1px solid #e4e4e7",
+      width: 264,
+      background: "var(--bg-panel)",
+      borderRight: "1px solid var(--border)",
       overflowY: "auto",
       zIndex: 10,
       flexShrink: 0,
@@ -180,39 +169,78 @@ export default function WorkflowBuilder() {
   const inspectorOpen = !!selectedNodeId;
   const inspectorShellStyle = useMemo<React.CSSProperties>(
     () => ({
-      width: inspectorOpen ? 320 : 0,
+      width: inspectorOpen ? 340 : 0,
       flexShrink: 0,
       overflow: "hidden",
-      transition: "width 200ms ease-out",
-      backgroundColor: "#ffffff",
-      borderLeft: inspectorOpen ? "1px solid #e4e4e7" : "none",
+      transition: "width var(--dur-mid) var(--ease-out)",
+      background: "var(--bg-panel)",
+      borderLeft: inspectorOpen ? "1px solid var(--border)" : "none",
     }),
     [inspectorOpen]
   );
 
   const inspectorInnerStyle = useMemo<React.CSSProperties>(
     () => ({
-      width: 320,
+      width: 340,
       height: "100%",
       overflowY: "auto",
       transform: inspectorOpen ? "translateX(0)" : "translateX(100%)",
-      transition: "transform 200ms ease-out",
+      transition: "transform var(--dur-mid) var(--ease-out)",
     }),
     [inspectorOpen]
   );
 
   return (
     <div
+      className="fp-builder-shell"
       style={{
         display: "flex",
         flexDirection: "column",
         height: "100vh",
-        backgroundColor: "#ffffff",
+        background: "var(--bg-canvas)",
       }}
     >
-      <TopBar banner={banner} setBanner={setBanner} />
+      <style>{`
+        @media (max-width: 1023px) {
+          .fp-builder-shell > .fp-builder-main { display: none !important; }
+          .fp-builder-shell > .fp-builder-narrow { display: flex !important; }
+        }
+        .fp-builder-narrow { display: none; }
+      `}</style>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <TopBar />
+
+      <div className="fp-builder-narrow"
+        style={{
+          flex: 1,
+          display: "none",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          textAlign: "center",
+          color: "var(--text-muted)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--text)",
+            marginBottom: 8,
+          }}
+        >
+          The builder is desktop-only
+        </div>
+        <div style={{ fontSize: 13, maxWidth: 320, lineHeight: 1.6 }}>
+          Reload at ≥1024px wide to compose workflows. The landing page works on any screen size.
+        </div>
+      </div>
+
+      <div
+        className="fp-builder-main"
+        style={{ display: "flex", flex: 1, minHeight: 0 }}
+      >
         <aside style={sidebarStyle}>
           <NodePalette />
         </aside>
@@ -222,7 +250,7 @@ export default function WorkflowBuilder() {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            backgroundColor: "#fafafa",
+            background: "var(--bg-canvas)",
             minWidth: 0,
           }}
         >
@@ -233,9 +261,9 @@ export default function WorkflowBuilder() {
           </div>
           <div
             style={{
-              height: 220,
-              borderTop: "1px solid #e4e4e7",
-              backgroundColor: "#ffffff",
+              height: 240,
+              borderTop: "1px solid var(--border)",
+              background: "var(--bg-panel)",
               flexShrink: 0,
             }}
           >

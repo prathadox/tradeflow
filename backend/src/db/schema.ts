@@ -2,6 +2,7 @@ import {
   pgTable,
   text,
   bigint,
+  bigserial,
   serial,
   jsonb,
   index,
@@ -64,3 +65,11 @@ export const sessionSigners = pgTable(
     workflowIdIdx: index("session_signers_workflow_id_idx").on(t.workflowId),
   })
 );
+
+export const waitlistSignups = pgTable("waitlist_signups", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  email: text("email").notNull().unique(),
+  source: text("source"),
+  referrer: text("referrer"),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});

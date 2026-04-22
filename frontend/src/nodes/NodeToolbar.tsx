@@ -2,11 +2,6 @@ import { X } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useGraphStore } from "../store/graphStore";
 
-/**
- * Floating hover-toolbar at the top-right of a node card.
- * Visible only on the parent card's :hover state (CSS via the wrapping .fp-node-hover).
- * Exposes a single monochrome "×" button that deletes the node + its edges.
- */
 export function NodeToolbar({ nodeId }: { nodeId: string }) {
   const deleteNode = useGraphStore((s) => s.deleteNode);
 
@@ -18,24 +13,26 @@ export function NodeToolbar({ nodeId }: { nodeId: string }) {
     gap: 4,
     opacity: 0,
     transform: "translateY(-2px)",
-    transition: "opacity 0.12s ease, transform 0.12s ease",
+    transition:
+      "opacity var(--dur-fast) ease, transform var(--dur-fast) ease",
     pointerEvents: "none",
     zIndex: 2,
   };
 
   const buttonStyle: CSSProperties = {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    border: "1px solid #e4e4e7",
-    borderRadius: 4,
-    backgroundColor: "#ffffff",
-    color: "#3f3f46",
+    border: "1px solid var(--border-strong)",
+    borderRadius: "var(--radius-xs)",
+    background: "var(--bg-elev)",
+    color: "var(--text-muted)",
     cursor: "pointer",
     padding: 0,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+    boxShadow: "var(--shadow-lift)",
+    transition: "background-color var(--dur-fast), color var(--dur-fast)",
   };
 
   const onClick = (e: MouseEvent<HTMLButtonElement>) => {
@@ -51,10 +48,12 @@ export function NodeToolbar({ nodeId }: { nodeId: string }) {
         title="Delete"
         onClick={onClick}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#f4f4f5";
+          e.currentTarget.style.backgroundColor = "var(--danger-soft)";
+          e.currentTarget.style.color = "var(--danger)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#ffffff";
+          e.currentTarget.style.backgroundColor = "var(--bg-elev)";
+          e.currentTarget.style.color = "var(--text-muted)";
         }}
         style={buttonStyle}
       >

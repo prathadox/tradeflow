@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, Check, Wallet } from "lucide-react";
+import {
+  ChevronDown,
+  Check,
+  Wallet,
+  Play,
+  Square,
+  Save,
+  LogOut,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { useGraphStore } from "../store/graphStore";
 import { useWalletStore } from "../store/walletStore";
 import { toWorkflowJson } from "../lib/workflowSerializer";
@@ -14,143 +23,61 @@ import {
 import type { Workflow } from "@shared/types";
 import WalletModal from "./WalletModal";
 import SessionAuthorizeModal from "./SessionAuthorizeModal";
+import Button from "../ui/Button";
+import Chip from "../ui/Chip";
+import Badge from "../ui/Badge";
+import { toast } from "../ui/toastStore";
 
-const H = 48;
+const H = 56;
 
 const headerStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 14,
+  gap: 12,
   height: H,
   padding: "0 18px",
-  borderBottom: "1px solid #e4e4e7",
-  backgroundColor: "#ffffff",
+  borderBottom: "1px solid var(--border)",
+  background: "var(--bg-panel)",
   zIndex: 20,
   flexShrink: 0,
   position: "relative",
 };
 
-const brandStyle: CSSProperties = {
-  fontWeight: 700,
-  fontSize: 14,
-  letterSpacing: "-0.4px",
-  color: "#09090b",
-};
-
 const divider: CSSProperties = {
   width: 1,
-  height: 18,
-  background: "#e4e4e7",
+  height: 22,
+  background: "var(--hairline)",
+  flexShrink: 0,
 };
 
 const nameInputStyle: CSSProperties = {
-  padding: "4px 6px",
+  padding: "6px 10px",
   border: "1px solid transparent",
-  borderRadius: 6,
-  backgroundColor: "transparent",
-  color: "#09090b",
+  borderRadius: "var(--radius-sm)",
+  background: "transparent",
+  color: "var(--text)",
   fontSize: 13,
   fontWeight: 500,
-  minWidth: 200,
+  minWidth: 220,
   outline: "none",
-  letterSpacing: "-0.2px",
-  transition: "background-color 120ms, border-color 120ms",
+  letterSpacing: "-0.1px",
+  transition: "background-color var(--dur-fast), border-color var(--dur-fast)",
 };
-
-const ctrlBase: CSSProperties = {
-  height: 30,
-  padding: "0 12px",
-  borderRadius: 6,
-  border: "1px solid #e4e4e7",
-  backgroundColor: "#ffffff",
-  color: "#09090b",
-  fontSize: 13,
-  fontWeight: 500,
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  transition: "background-color 120ms, border-color 120ms",
-  whiteSpace: "nowrap",
-};
-
-const primary = (enabled: boolean): CSSProperties => ({
-  ...ctrlBase,
-  border: "1px solid #09090b",
-  backgroundColor: enabled ? "#09090b" : "#d4d4d8",
-  color: "#ffffff",
-  cursor: enabled ? "pointer" : "not-allowed",
-});
-
-const ghost = (enabled: boolean): CSSProperties => ({
-  ...ctrlBase,
-  color: enabled ? "#09090b" : "#a1a1aa",
-  cursor: enabled ? "pointer" : "not-allowed",
-});
-
-const walletChip: CSSProperties = {
-  ...ctrlBase,
-  backgroundColor: "#ecfdf5",
-  border: "1px solid #a7f3d0",
-  color: "#065f46",
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  fontSize: 12,
-};
-
-const runIndicator: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-  padding: "0 10px",
-  height: 30,
-  borderRadius: 6,
-  border: "1px solid #e4e4e7",
-  color: "#09090b",
-  fontSize: 12,
-  fontWeight: 500,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-};
-
-const runDot: CSSProperties = {
-  width: 7,
-  height: 7,
-  borderRadius: "50%",
-  backgroundColor: "#09090b",
-  animation: "flowpay-pulse 1.6s infinite cubic-bezier(0.4, 0, 0.6, 1)",
-};
-
-const toastStyle = (kind: "success" | "error"): CSSProperties => ({
-  position: "fixed",
-  top: H + 12,
-  right: 18,
-  maxWidth: 360,
-  padding: "8px 12px",
-  borderRadius: 8,
-  backgroundColor: "#ffffff",
-  border: `1px solid ${kind === "success" ? "#e4e4e7" : "#fecaca"}`,
-  color: kind === "success" ? "#09090b" : "#991b1b",
-  fontSize: 12.5,
-  fontWeight: 500,
-  boxShadow: "0 4px 16px rgba(9,9,11,0.08)",
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  zIndex: 50,
-});
 
 const menuStyle: CSSProperties = {
   position: "absolute",
-  top: 36,
+  top: 38,
   right: 0,
-  minWidth: 240,
-  maxHeight: 300,
+  minWidth: 260,
+  maxHeight: 320,
   overflowY: "auto",
   padding: 4,
-  backgroundColor: "#ffffff",
-  border: "1px solid #e4e4e7",
-  borderRadius: 8,
-  boxShadow: "0 8px 24px rgba(9,9,11,0.08)",
+  background: "var(--bg-elev)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius-md)",
+  boxShadow: "var(--shadow-pop)",
   zIndex: 40,
+  animation: "flowpay-fade-in 140ms var(--ease-out)",
 };
 
 const menuItemStyle: CSSProperties = {
@@ -158,11 +85,12 @@ const menuItemStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: 8,
-  padding: "7px 10px",
-  borderRadius: 6,
+  padding: "8px 10px",
+  borderRadius: "var(--radius-xs)",
   fontSize: 13,
-  color: "#09090b",
+  color: "var(--text)",
   cursor: "pointer",
+  transition: "background-color var(--dur-fast)",
 };
 
 export interface BannerMessage {
@@ -207,12 +135,9 @@ function deriveStrategyPair(
   return { pair, notional: Number.isFinite(notional) ? notional : 100, dryRun };
 }
 
-export default function TopBar({
-  banner,
-  setBanner,
-}: {
-  banner: BannerMessage | null;
-  setBanner: (b: BannerMessage | null) => void;
+export default function TopBar(_props: {
+  banner?: BannerMessage | null;
+  setBanner?: (b: BannerMessage | null) => void;
 }) {
   const name = useGraphStore((s) => s.name);
   const setName = useGraphStore((s) => s.setName);
@@ -245,7 +170,7 @@ export default function TopBar({
       const list = await listWorkflows();
       setWorkflows(list);
     } catch (err) {
-      setBanner({ kind: "error", text: `Failed to list: ${(err as Error).message}` });
+      toast.error(`Failed to list: ${(err as Error).message}`);
     }
   };
 
@@ -281,12 +206,6 @@ export default function TopBar({
   }, [running, startedAt]);
 
   useEffect(() => {
-    if (!banner) return;
-    const t = window.setTimeout(() => setBanner(null), 3200);
-    return () => window.clearTimeout(t);
-  }, [banner, setBanner]);
-
-  useEffect(() => {
     if (!loadMenuOpen) return;
     const onDoc = (e: MouseEvent) => {
       if (loadMenuRef.current && !loadMenuRef.current.contains(e.target as Node)) {
@@ -318,7 +237,6 @@ export default function TopBar({
 
   const onSave = async () => {
     setSaving(true);
-    setBanner(null);
     try {
       const json = toWorkflowJson({ id, name, nodes, edges });
       const result = await createWorkflow({
@@ -327,10 +245,10 @@ export default function TopBar({
         edges: json.edges,
       });
       setId(result.id);
-      setBanner({ kind: "success", text: `Saved · ${result.id.slice(0, 8)}` });
+      toast.success(`Saved · ${result.id.slice(0, 8)}`);
       await refreshList();
     } catch (err) {
-      setBanner({ kind: "error", text: `Save failed: ${(err as Error).message}` });
+      toast.error(`Save failed: ${(err as Error).message}`);
     } finally {
       setSaving(false);
     }
@@ -339,7 +257,6 @@ export default function TopBar({
   const onLoad = async (wid: string) => {
     setLoadMenuOpen(false);
     if (!wid) return;
-    setBanner(null);
     try {
       const wf = await getWorkflow(wid);
       loadWorkflow(wf);
@@ -351,15 +268,14 @@ export default function TopBar({
       } catch {
         /* no-op */
       }
-      setBanner({ kind: "success", text: `Loaded · ${wf.name}` });
+      toast.success(`Loaded · ${wf.name}`);
     } catch (err) {
-      setBanner({ kind: "error", text: `Load failed: ${(err as Error).message}` });
+      toast.error(`Load failed: ${(err as Error).message}`);
     }
   };
 
   const doStart = async (sessionSignerId: string | null) => {
     if (!id) return;
-    setBanner(null);
     try {
       const r = await startWorkflow(id, { sessionSignerId });
       setRunning(true);
@@ -367,10 +283,10 @@ export default function TopBar({
       setNow(Date.now());
       beginPolling(id);
       if (r.alreadyRunning) {
-        setBanner({ kind: "success", text: "Already running" });
+        toast.info("Already running");
       }
     } catch (err) {
-      setBanner({ kind: "error", text: `Start failed: ${(err as Error).message}` });
+      toast.error(`Start failed: ${(err as Error).message}`);
     }
   };
 
@@ -380,7 +296,7 @@ export default function TopBar({
     const needsSession = derived?.dryRun === false;
     if (needsSession) {
       if (!publicKey) {
-        setBanner({ kind: "error", text: "Connect wallet before live trading" });
+        toast.error("Connect wallet before live trading");
         setWalletModalOpen(true);
         return;
       }
@@ -397,7 +313,6 @@ export default function TopBar({
 
   const onStop = async () => {
     if (!id) return;
-    setBanner(null);
     try {
       await stopWorkflow(id);
       setRunning(false);
@@ -407,14 +322,14 @@ export default function TopBar({
         pollRef.current = null;
       }
     } catch (err) {
-      setBanner({ kind: "error", text: `Stop failed: ${(err as Error).message}` });
+      toast.error(`Stop failed: ${(err as Error).message}`);
     }
   };
 
   const onDisconnect = () => {
     if (id) forgetSession(id);
     disconnect();
-    setBanner({ kind: "success", text: "Wallet disconnected" });
+    toast.info("Wallet disconnected");
   };
 
   const canStart = !!id && !running;
@@ -430,21 +345,48 @@ export default function TopBar({
   return (
     <>
       <style>{`
-        @keyframes flowpay-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(9, 9, 11, 0.35); }
-          70% { box-shadow: 0 0 0 5px rgba(9, 9, 11, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(9, 9, 11, 0); }
-        }
-        .flowpay-name-input:hover { background-color: #f4f4f5; }
-        .flowpay-name-input:focus { background-color: #f4f4f5; border-color: #e4e4e7; }
-        .flowpay-ctrl:hover:not(:disabled) { background-color: #f4f4f5; }
-        .flowpay-primary:hover:not(:disabled) { background-color: #18181b !important; }
-        .flowpay-menu-item:hover { background-color: #f4f4f5; }
+        .flowpay-name-input:hover { background-color: var(--bg-hover); }
+        .flowpay-name-input:focus { background-color: var(--bg-hover); border-color: var(--border) !important; }
       `}</style>
 
       <div style={headerStyle}>
-        <div style={brandStyle}>FlowPay</div>
+        <Link
+          to="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 9,
+            fontFamily: "var(--font-display)",
+            fontWeight: 400,
+            fontSize: 18,
+            color: "var(--text)",
+            letterSpacing: "-0.01em",
+            lineHeight: 1,
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: 5,
+              background: "var(--text)",
+              color: "var(--bg-canvas)",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 800,
+              fontSize: 12,
+              letterSpacing: "-0.5px",
+            }}
+          >
+            F
+          </span>
+          FlowPay
+        </Link>
+
         <div style={divider} />
+
         <input
           className="flowpay-name-input"
           style={nameInputStyle}
@@ -455,38 +397,44 @@ export default function TopBar({
 
         <div style={{ flex: 1 }} />
 
+        {running && startedAt !== null && (
+          <Badge tone="violet" dot mono>
+            {elapsed}
+          </Badge>
+        )}
+
         {publicKey ? (
-          <button
-            className="flowpay-ctrl"
-            style={walletChip}
+          <Chip
             onClick={onDisconnect}
             title="Click to disconnect"
+            dot="mint"
+            mono
+            trailingIcon={<LogOut size={11} />}
           >
-            <Wallet size={12} strokeWidth={2.25} />
             {publicKey.slice(0, 4)}…{publicKey.slice(-4)}
-          </button>
+          </Chip>
         ) : (
-          <button
-            className="flowpay-ctrl"
-            style={ghost(true)}
+          <Button
+            variant="secondary"
+            size="sm"
+            leadingIcon={<Wallet size={13} />}
             onClick={() => setWalletModalOpen(true)}
           >
-            <Wallet size={14} strokeWidth={2} />
             Connect wallet
-          </button>
+          </Button>
         )}
 
         <div style={divider} />
 
         <div ref={loadMenuRef} style={{ position: "relative" }}>
-          <button
-            className="flowpay-ctrl"
-            style={ghost(true)}
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setLoadMenuOpen((v) => !v)}
+            trailingIcon={<ChevronDown size={13} />}
           >
             Load
-            <ChevronDown size={14} strokeWidth={2} />
-          </button>
+          </Button>
           {loadMenuOpen && (
             <div style={menuStyle}>
               {workflows.length === 0 ? (
@@ -494,7 +442,7 @@ export default function TopBar({
                   style={{
                     padding: "10px 12px",
                     fontSize: 12.5,
-                    color: "#a1a1aa",
+                    color: "var(--text-dim)",
                   }}
                 >
                   No saved workflows
@@ -503,9 +451,14 @@ export default function TopBar({
                 workflows.map((w) => (
                   <div
                     key={w.id}
-                    className="flowpay-menu-item"
                     style={menuItemStyle}
                     onClick={() => onLoad(w.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--bg-hover)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                   >
                     <span
                       style={{
@@ -517,14 +470,17 @@ export default function TopBar({
                       {w.name}
                     </span>
                     <span
+                      className="fp-mono"
                       style={{
                         fontSize: 11,
-                        color: "#a1a1aa",
-                        fontFamily:
-                          "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                        color: "var(--text-dim)",
                       }}
                     >
-                      {w.id === id ? <Check size={12} /> : w.id.slice(0, 6)}
+                      {w.id === id ? (
+                        <Check size={12} color="var(--mint)" />
+                      ) : (
+                        w.id.slice(0, 6)
+                      )}
                     </span>
                   </div>
                 ))
@@ -533,62 +489,47 @@ export default function TopBar({
           )}
         </div>
 
-        <button
-          className="flowpay-ctrl flowpay-primary"
-          style={primary(canSave)}
+        <Button
+          variant="secondary"
+          size="sm"
+          leadingIcon={<Save size={13} />}
           disabled={!canSave}
+          loading={saving}
           onClick={onSave}
         >
-          {saving ? "Saving…" : "Save"}
-        </button>
-
-        <div style={divider} />
-
-        {running && startedAt !== null && (
-          <div style={runIndicator}>
-            <span style={runDot} />
-            {elapsed}
-          </div>
-        )}
+          Save
+        </Button>
 
         {!running ? (
-          <button
-            className="flowpay-ctrl flowpay-primary"
-            style={primary(canStart)}
+          <Button
+            variant="primary"
+            size="sm"
+            leadingIcon={<Play size={13} />}
             disabled={!canStart}
             onClick={onStart}
           >
             Start
-          </button>
+          </Button>
         ) : (
-          <button
-            className="flowpay-ctrl"
-            style={{ ...ctrlBase, border: "1px solid #09090b", color: "#09090b" }}
+          <Button
+            variant="danger"
+            size="sm"
+            leadingIcon={<Square size={13} />}
             disabled={!canStop}
             onClick={onStop}
           >
             Stop
-          </button>
+          </Button>
         )}
       </div>
 
-      {banner && (
-        <div style={toastStyle(banner.kind)} onClick={() => setBanner(null)}>
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              backgroundColor: banner.kind === "success" ? "#059669" : "#dc2626",
-            }}
-          />
-          {banner.text}
-        </div>
-      )}
-
-      {walletModalOpen && <WalletModal onClose={() => setWalletModalOpen(false)} />}
-      {sessionModalOpen && id && derived && (
+      <WalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+      />
+      {id && derived && (
         <SessionAuthorizeModal
+          open={sessionModalOpen}
           workflowId={id}
           pair={derived.pair}
           defaultNotional={derived.notional}

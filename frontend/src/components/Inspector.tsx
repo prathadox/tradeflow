@@ -1,5 +1,6 @@
 import type { ChangeEvent, CSSProperties } from "react";
 import { useMemo } from "react";
+import { X } from "lucide-react";
 import { useGraphStore, type FlowNode } from "../store/graphStore";
 import { useWalletStore } from "../store/walletStore";
 import { truncateIssuer } from "../nodes/nodeStyles";
@@ -9,42 +10,21 @@ import {
   PAIR_PRESETS,
 } from "../lib/assetPresets";
 import Select, { type SelectOption } from "./Select";
-
-const labelStyle: CSSProperties = {
-  fontSize: "10px",
-  textTransform: "uppercase",
-  letterSpacing: "0.8px",
-  color: "#71717a",
-  fontWeight: 600,
-  marginBottom: "6px",
-};
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  backgroundColor: "#ffffff",
-  border: "1px solid #e4e4e7",
-  borderRadius: "6px",
-  color: "#09090b",
-  fontSize: "13px",
-  outline: "none",
-  transition: "border-color 0.15s",
-  boxSizing: "border-box",
-};
+import Field from "../ui/Field";
+import Input from "../ui/Input";
 
 const sectionHeaderStyle: CSSProperties = {
-  fontSize: "10px",
+  fontSize: 10,
   textTransform: "uppercase",
-  letterSpacing: "0.8px",
+  letterSpacing: "0.9px",
   fontWeight: 600,
-  color: "#71717a",
+  color: "var(--text-muted)",
 };
 
 const helperStyle: CSSProperties = {
-  fontSize: "11px",
-  color: "#a1a1aa",
-  marginTop: "4px",
-  lineHeight: 1.4,
+  fontSize: 11,
+  color: "var(--text-dim)",
+  lineHeight: 1.5,
 };
 
 interface FieldDef {
@@ -182,7 +162,7 @@ export default function Inspector() {
           flexDirection: "column",
           gap: "6px",
           paddingBottom: "16px",
-          borderBottom: "1px solid #e4e4e7",
+          borderBottom: "1px solid var(--hairline)",
         }}
       >
         <div
@@ -199,39 +179,39 @@ export default function Inspector() {
             style={{
               background: "transparent",
               border: "none",
-              color: "#71717a",
+              color: "var(--text-muted)",
               cursor: "pointer",
-              padding: "2px 6px",
-              borderRadius: "4px",
-              fontSize: "16px",
-              lineHeight: 1,
-              transition: "background-color 0.15s, color 0.15s",
+              padding: "4px",
+              borderRadius: "var(--radius-xs)",
+              display: "inline-flex",
+              alignItems: "center",
+              transition: "background-color var(--dur-fast), color var(--dur-fast)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f4f4f5";
-              e.currentTarget.style.color = "#09090b";
+              e.currentTarget.style.backgroundColor = "var(--bg-hover)";
+              e.currentTarget.style.color = "var(--text)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#71717a";
+              e.currentTarget.style.color = "var(--text-muted)";
             }}
           >
-            ×
+            <X size={14} />
           </button>
         </div>
         <div
           style={{
-            fontSize: "16px",
+            fontSize: 16,
             fontWeight: 600,
-            color: "#09090b",
-            letterSpacing: "-0.2px",
+            color: "var(--text)",
+            letterSpacing: "-0.3px",
           }}
         >
           {node.data.label}
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {node.data.kind === "asset" && (() => {
           const currentCode = String(node.data.params.code ?? "");
           const currentIssuer = String(node.data.params.issuer ?? "");
@@ -263,38 +243,34 @@ export default function Inspector() {
               issuer: p.issuer,
             });
           };
+          const hint =
+            matched?.note ??
+            (matched
+              ? matched.binance
+                ? "Has Binance reference price — arbitrage-capable."
+                : "Valid Stellar asset; no Binance ticker."
+              : "Pick a preset or enter a custom code + issuer below.");
           return (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-assetPreset">
-                Preset
-              </label>
+            <Field label="Preset" hint={hint} htmlFor="field-assetPreset">
               <Select
                 id="field-assetPreset"
                 value={selectedPresetId}
                 options={presetOptions}
                 onChange={onPresetChange}
               />
-              <div style={helperStyle}>
-                {matched?.note ??
-                  (matched
-                    ? matched.binance
-                      ? "Has Binance reference price — arbitrage-capable."
-                      : "Valid Stellar asset; no Binance ticker."
-                    : "Pick a preset or enter a custom code + issuer below.")}
-              </div>
-            </div>
+            </Field>
           );
         })()}
 
         {node.data.kind === "asset" && (
           <>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-code">
-                Asset code
-              </label>
-              <input
+            <Field
+              label="Asset code"
+              hint="Asset code required to connect to a strategy."
+              htmlFor="field-code"
+            >
+              <Input
                 id="field-code"
-                style={inputStyle}
                 type="text"
                 value={String(node.data.params.code ?? "")}
                 onChange={(e) => {
@@ -307,15 +283,10 @@ export default function Inspector() {
                 placeholder="e.g. XLM, USDC"
                 maxLength={12}
               />
-              <div style={helperStyle}>Asset code required to connect to a strategy.</div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-issuer">
-                Issuer
-              </label>
-              <input
+            </Field>
+            <Field label="Issuer" htmlFor="field-issuer">
+              <Input
                 id="field-issuer"
-                style={inputStyle}
                 type="text"
                 value={String(node.data.params.issuer ?? "")}
                 onChange={(e) =>
@@ -326,7 +297,7 @@ export default function Inspector() {
                 }
                 placeholder="Issuer G… (empty = native)"
               />
-            </div>
+            </Field>
           </>
         )}
 
@@ -338,10 +309,16 @@ export default function Inspector() {
           ];
           const pairValue = currentPair === "" ? "__derive__" : currentPair;
           return (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-pair">
-                Pair
-              </label>
+            <Field
+              label="Pair"
+              hint={
+                <>
+                  Pick a ready pair, or choose <b>Derive</b> and wire Asset
+                  nodes to the strategy&rsquo;s left handle for a custom combo.
+                </>
+              }
+              htmlFor="field-pair"
+            >
               <Select
                 id="field-pair"
                 value={pairValue}
@@ -353,18 +330,12 @@ export default function Inspector() {
                   });
                 }}
               />
-              <div style={helperStyle}>
-                Pick a ready pair, or choose <b>Derive</b> and wire Asset nodes
-                to the strategy&rsquo;s left handle for a custom combo.
-              </div>
-            </div>
+            </Field>
           );
         })()}
 
         {fields.length === 0 && !showAssetSelectors && node.data.kind !== "asset" && (
-          <div
-            style={{ color: "#a1a1aa", fontSize: "13px", fontStyle: "italic" }}
-          >
+          <div style={{ color: "var(--text-dim)", fontSize: 13, fontStyle: "italic" }}>
             No configurable parameters.
           </div>
         )}
@@ -374,12 +345,12 @@ export default function Inspector() {
 
           if (f.type === "checkbox") {
             return (
-              <div key={f.key}>
+              <div key={f.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
+                    gap: 10,
                     cursor: "pointer",
                     userSelect: "none",
                   }}
@@ -389,18 +360,18 @@ export default function Inspector() {
                     checked={!!v}
                     onChange={onFieldChange(f.key, f)}
                     style={{
-                      width: "16px",
-                      height: "16px",
-                      accentColor: "#09090b",
+                      width: 16,
+                      height: 16,
+                      accentColor: "var(--accent)",
                       cursor: "pointer",
                       margin: 0,
                     }}
                   />
                   <span
                     style={{
-                      fontSize: "13px",
+                      fontSize: 13,
                       fontWeight: 500,
-                      color: "#3f3f46",
+                      color: "var(--text)",
                     }}
                   >
                     {f.label}
@@ -413,19 +384,15 @@ export default function Inspector() {
 
           const err = validationError(f, v);
           return (
-            <div
+            <Field
               key={f.key}
-              style={{ display: "flex", flexDirection: "column" }}
+              label={f.label}
+              hint={f.helper}
+              error={err ?? undefined}
+              htmlFor={`field-${f.key}`}
             >
-              <label style={labelStyle} htmlFor={`field-${f.key}`}>
-                {f.label}
-              </label>
-              <input
+              <Input
                 id={`field-${f.key}`}
-                style={{
-                  ...inputStyle,
-                  borderColor: err ? "#dc2626" : "#e4e4e7",
-                }}
                 type={f.type}
                 value={v === undefined || v === null ? "" : String(v)}
                 onChange={onFieldChange(f.key, f)}
@@ -433,19 +400,9 @@ export default function Inspector() {
                 maxLength={f.maxLength}
                 min={f.min}
                 max={f.max}
-                onFocus={(e) => {
-                  if (!err) e.currentTarget.style.borderColor = "#09090b";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = err ? "#dc2626" : "#e4e4e7";
-                }}
+                invalid={!!err}
               />
-              {err ? (
-                <div style={{ ...helperStyle, color: "#dc2626" }}>{err}</div>
-              ) : (
-                f.helper && <div style={helperStyle}>{f.helper}</div>
-              )}
-            </div>
+            </Field>
           );
         })}
 
@@ -454,17 +411,14 @@ export default function Inspector() {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "14px",
-              paddingTop: "14px",
-              borderTop: "1px solid #e4e4e7",
+              gap: 14,
+              paddingTop: 14,
+              borderTop: "1px solid var(--hairline)",
             }}
           >
             <div style={sectionHeaderStyle}>Assets</div>
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-baseAssetId">
-                Base asset
-              </label>
+            <Field label="Base asset" htmlFor="field-baseAssetId">
               <Select
                 id="field-baseAssetId"
                 value={baseAssetId ?? ""}
@@ -479,12 +433,9 @@ export default function Inspector() {
                   })
                 }
               />
-            </div>
+            </Field>
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={labelStyle} htmlFor="field-quoteAssetId">
-                Quote asset
-              </label>
+            <Field label="Quote asset" htmlFor="field-quoteAssetId">
               <Select
                 id="field-quoteAssetId"
                 value={quoteAssetId ?? ""}
@@ -499,7 +450,7 @@ export default function Inspector() {
                   })
                 }
               />
-            </div>
+            </Field>
 
             {connectedAssets.length === 0 && (
               <div style={helperStyle}>
