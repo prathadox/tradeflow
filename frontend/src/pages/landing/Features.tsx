@@ -10,8 +10,8 @@ import {
 import { SectionHead } from "./HowItWorks";
 
 const section: React.CSSProperties = {
-  padding: "72px 24px",
-  maxWidth: 1200,
+  padding: "56px 24px 64px",
+  maxWidth: 1100,
   margin: "0 auto",
 };
 
@@ -62,47 +62,55 @@ export default function Features() {
         title="Built for people who'd rather not babysit bots."
         sub="The primitives you'd expect from a quant stack — minus the terminal."
       />
-      <div
-        style={{
-          marginTop: 48,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-          gap: 8,
-        }}
-      >
+      <style>{`
+        .fp-features-grid {
+          margin-top: 40px;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 14px;
+        }
+        @media (max-width: 920px) {
+          .fp-features-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 560px) {
+          .fp-features-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+        .fp-feature-card {
+          padding: 22px;
+          background: var(--bg-panel);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          transition: border-color var(--dur-fast), transform var(--dur-fast);
+        }
+        .fp-feature-card:hover {
+          border-color: var(--border-strong);
+          transform: translateY(-1px);
+        }
+      `}</style>
+      <div className="fp-features-grid">
         {features.map((f) => (
-          <div
-            key={f.title}
-            style={{
-              padding: 20,
-              background: "var(--bg-panel)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              transition:
-                "border-color var(--dur-fast), transform var(--dur-fast)",
-            }}
-          >
+          <div key={f.title} className="fp-feature-card">
             <div
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: "var(--radius-sm)",
-                background: "var(--bg-sunken)",
+                width: 36,
+                height: 36,
+                borderRadius: "var(--radius-md)",
+                background: "var(--accent-soft)",
                 color: "var(--accent)",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "1px solid var(--border)",
+                border: "1px solid rgba(124,92,255,0.3)",
               }}
             >
               {f.icon}
             </div>
             <div
               style={{
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: 600,
                 color: "var(--text)",
                 marginTop: 4,
@@ -113,9 +121,9 @@ export default function Features() {
             </div>
             <div
               style={{
-                fontSize: 12.5,
+                fontSize: 13,
                 color: "var(--text-muted)",
-                lineHeight: 1.55,
+                lineHeight: 1.6,
               }}
             >
               {f.body}
