@@ -35,7 +35,7 @@ export default function WalletModal({
       open={open}
       onClose={onClose}
       title="Connect wallet"
-      description="FlowPay uses Freighter to identify your Stellar account. You'll authorize a scoped session key before any workflow trades — Freighter never pops per trade."
+      description="spay uses Freighter to identify your Stellar account. You'll authorize a scoped session key before any workflow trades — Freighter never pops per trade."
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={connecting}>
@@ -70,7 +70,7 @@ export default function WalletModal({
           style={{ color: "var(--mint)", flexShrink: 0, marginTop: 1 }}
         />
         <div>
-          Your keys stay in Freighter. FlowPay only sees your public address
+          Your keys stay in Freighter. spay only sees your public address
           until you authorize a session.
         </div>
       </div>

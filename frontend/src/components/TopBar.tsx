@@ -392,7 +392,7 @@ export default function TopBar(_props: {
           }}
         >
           <LogoMark />
-          FlowPay
+          spay
         </Link>
 
         <div style={divider} />

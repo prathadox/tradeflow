@@ -55,7 +55,7 @@ export default function Showcase() {
               fontFamily: "var(--font-mono)",
             }}
           >
-            flowpay.xyz/app — xlm arbitrage
+            spay.xyz/app — xlm arbitrage
           </div>
         </div>
         <div style={dotGrid}>

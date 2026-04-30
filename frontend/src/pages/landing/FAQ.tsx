@@ -11,7 +11,7 @@ const section: React.CSSProperties = {
 const items: { q: string; a: string }[] = [
   {
     q: "Is this custodial?",
-    a: "No. Your main wallet never signs anything past the initial authorization. FlowPay uses a scoped, ephemeral session key that you approve once. It can only do what the policy allows (pair, max notional, TTL), and you can revoke it at any time.",
+    a: "No. Your main wallet never signs anything past the initial authorization. spay uses a scoped, ephemeral session key that you approve once. It can only do what the policy allows (pair, max notional, TTL), and you can revoke it at any time.",
   },
   {
     q: "Does it run on mainnet?",

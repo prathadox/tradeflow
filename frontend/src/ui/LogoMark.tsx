@@ -20,7 +20,7 @@ export default function LogoMark({ size = 22 }: { size?: number }) {
     display: "block",
   };
   return (
-    <span style={style} aria-label="FlowPay">
+    <span style={style} aria-label="spay">
       <img src="/logo.jpg" alt="" style={imgStyle} draggable={false} />
     </span>
   );

@@ -109,7 +109,7 @@ export default function Hero() {
 
         <p style={subtitleStyle}>
           Drag triggers, strategies, and assets onto a canvas. Authorize once
-          with your wallet. FlowPay signs every trade within your policy.
+          with your wallet. spay signs every trade within your policy.
           No per-trade popups. Nothing custodial.
         </p>
 
@@ -119,9 +119,9 @@ export default function Hero() {
               Join the waitlist
             </Button>
           </a>
-          <a href="#how-it-works">
+          <a href="#waitlist">
             <Button variant="secondary" leadingIcon={<PlayCircle size={14} />}>
-              See how it works
+              Get early access
             </Button>
           </a>
         </div>
@@ -191,7 +191,7 @@ function CanvasChrome() {
             display: "inline-block",
           }}
         />
-        canvas.flowpay
+        canvas.spay
       </div>
       <div
         aria-hidden

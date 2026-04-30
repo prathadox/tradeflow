@@ -40,7 +40,7 @@ export default function Footer() {
               letterSpacing: "-0.01em",
             }}
           >
-            FlowPay
+            spay
           </span>
           <span style={{ color: "var(--text-dim)" }}>© {year}</span>
         </div>
@@ -58,7 +58,7 @@ export default function Footer() {
           <a href="https://github.com" target="_blank" rel="noreferrer">
             GitHub
           </a>
-          <a href="mailto:hello@flowpay.xyz">hello@flowpay.xyz</a>
+          <a href="mailto:hello@spay.xyz">hello@spay.xyz</a>
         </div>
       </div>
     </footer>

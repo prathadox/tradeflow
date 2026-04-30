@@ -74,7 +74,7 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
         }}
       >
         <LogoMark />
-        FlowPay
+        spay
       </Link>
 
       <span

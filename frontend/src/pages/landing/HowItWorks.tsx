@@ -32,7 +32,7 @@ const steps: {
     icon: <Zap size={16} />,
     title: "Let it run",
     body:
-      "FlowPay watches the spread and submits on-chain trades for you. Stream of events, history of runs, audit trail.",
+      "spay watches the spread and submits on-chain trades for you. Stream of events, history of runs, audit trail.",
   },
 ];
 
