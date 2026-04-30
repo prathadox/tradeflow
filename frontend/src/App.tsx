@@ -2,8 +2,20 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Toaster from "./ui/Toast";
+import { isPreviewUnlocked } from "./lib/preview";
 
 const WorkflowBuilder = lazy(() => import("./pages/WorkflowBuilder"));
+
+function GatedBuilder() {
+  if (!isPreviewUnlocked()) {
+    return <Navigate to="/#waitlist" replace />;
+  }
+  return (
+    <Suspense fallback={<BuilderFallback />}>
+      <WorkflowBuilder />
+    </Suspense>
+  );
+}
 
 function BuilderFallback() {
   return (
@@ -27,14 +39,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route
-          path="/app"
-          element={
-            <Suspense fallback={<BuilderFallback />}>
-              <WorkflowBuilder />
-            </Suspense>
-          }
-        />
+        <Route path="/app" element={<GatedBuilder />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />

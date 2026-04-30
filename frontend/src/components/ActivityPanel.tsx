@@ -53,8 +53,15 @@ function formatTime(ts: number): string {
   return d.toLocaleTimeString(undefined, { hour12: false });
 }
 
+function isWouldTrade(e: LiveEvent): boolean {
+  if (e.kind !== "decision") return false;
+  if (e.data && (e.data as Record<string, unknown>).wouldTrade) return true;
+  return /would execute|spread detected/i.test(e.message);
+}
+
 function EventRow({ e }: { e: LiveEvent }) {
   const meta = KIND_META[e.kind];
+  const wouldTrade = isWouldTrade(e);
   return (
     <div
       style={{
@@ -63,8 +70,10 @@ function EventRow({ e }: { e: LiveEvent }) {
         gap: 10,
         padding: "8px 10px",
         borderRadius: "var(--radius-sm)",
-        background: "var(--bg-sunken)",
-        borderLeft: `2px solid ${meta.border}`,
+        background: wouldTrade ? "var(--accent-soft)" : "var(--bg-sunken)",
+        borderLeft: `2px solid ${
+          wouldTrade ? "var(--accent)" : meta.border
+        }`,
       }}
     >
       <span
@@ -81,11 +90,19 @@ function EventRow({ e }: { e: LiveEvent }) {
       <Badge tone={meta.tone} style={{ fontSize: 9.5, height: 18, padding: "0 6px" }}>
         {e.kind}
       </Badge>
+      {wouldTrade && (
+        <Badge
+          tone="violet"
+          style={{ fontSize: 9.5, height: 18, padding: "0 6px" }}
+        >
+          would trade
+        </Badge>
+      )}
       <span
         style={{
           fontSize: 12.5,
           color: "var(--text)",
-          fontWeight: 450,
+          fontWeight: wouldTrade ? 600 : 450,
           wordBreak: "break-word",
           flex: 1,
           minWidth: 0,

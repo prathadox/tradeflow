@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { Link } from "react-router-dom";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import Button from "../../ui/Button";
 import Badge from "../../ui/Badge";
@@ -120,11 +119,11 @@ export default function Hero() {
               Join the waitlist
             </Button>
           </a>
-          <Link to="/app">
+          <a href="#how-it-works">
             <Button variant="secondary" leadingIcon={<PlayCircle size={14} />}>
-              Try the builder
+              See how it works
             </Button>
-          </Link>
+          </a>
         </div>
 
         <div style={statsRow}>

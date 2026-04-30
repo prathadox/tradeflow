@@ -20,12 +20,14 @@ import {
   startWorkflow,
   stopWorkflow,
 } from "../api/workflows";
+import { subscribeEvents, type LiveEvent } from "../api/events";
 import type { Workflow } from "@shared/types";
 import WalletModal from "./WalletModal";
 import SessionAuthorizeModal from "./SessionAuthorizeModal";
 import Button from "../ui/Button";
 import Chip from "../ui/Chip";
 import Badge from "../ui/Badge";
+import LogoMark from "../ui/LogoMark";
 import { toast } from "../ui/toastStore";
 
 const H = 56;
@@ -161,6 +163,9 @@ export default function TopBar(_props: {
   const [now, setNow] = useState(() => Date.now());
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [sessionModalOpen, setSessionModalOpen] = useState(false);
+  const [tickCount, setTickCount] = useState(0);
+  const [decisionCount, setDecisionCount] = useState(0);
+  const [lastEvent, setLastEvent] = useState<LiveEvent | null>(null);
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
   const loadMenuRef = useRef<HTMLDivElement | null>(null);
@@ -182,11 +187,26 @@ export default function TopBar(_props: {
   useEffect(() => {
     setRunning(false);
     setStartedAt(null);
+    setTickCount(0);
+    setDecisionCount(0);
+    setLastEvent(null);
     if (pollRef.current !== null) {
       window.clearInterval(pollRef.current);
       pollRef.current = null;
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!running || !id) return;
+    setTickCount(0);
+    setDecisionCount(0);
+    const unsub = subscribeEvents(id, (e) => {
+      setLastEvent(e);
+      if (e.kind === "tick") setTickCount((n) => n + 1);
+      else if (e.kind === "decision") setDecisionCount((n) => n + 1);
+    });
+    return () => unsub();
+  }, [running, id]);
 
   useEffect(() => {
     return () => {
@@ -284,6 +304,13 @@ export default function TopBar(_props: {
       beginPolling(id);
       if (r.alreadyRunning) {
         toast.info("Already running");
+      } else {
+        const isDry = deriveStrategyPair(nodes, edges)?.dryRun ?? true;
+        toast.success(
+          isDry
+            ? "Dry run started — watch the activity panel below for ticks & decisions"
+            : "Live run started — trades will execute within session policy"
+        );
       }
     } catch (err) {
       toast.error(`Start failed: ${(err as Error).message}`);
@@ -364,24 +391,7 @@ export default function TopBar(_props: {
             lineHeight: 1,
           }}
         >
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 22,
-              height: 22,
-              borderRadius: 5,
-              background: "var(--text)",
-              color: "var(--bg-canvas)",
-              fontFamily: "var(--font-sans)",
-              fontWeight: 800,
-              fontSize: 12,
-              letterSpacing: "-0.5px",
-            }}
-          >
-            F
-          </span>
+          <LogoMark />
           FlowPay
         </Link>
 
@@ -398,9 +408,42 @@ export default function TopBar(_props: {
         <div style={{ flex: 1 }} />
 
         {running && startedAt !== null && (
-          <Badge tone="violet" dot mono>
-            {elapsed}
-          </Badge>
+          <>
+            <Badge tone={derived?.dryRun === false ? "amber" : "mint"} dot>
+              {derived?.dryRun === false ? "LIVE" : "DRY"}
+            </Badge>
+            <Badge tone="violet" mono>
+              {elapsed}
+            </Badge>
+            <span
+              title="Ticks fired · decisions emitted"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--text-muted)",
+              }}
+            >
+              {tickCount}t · {decisionCount}d
+            </span>
+            {lastEvent && (
+              <span
+                title={lastEvent.message}
+                style={{
+                  fontSize: 11.5,
+                  color: "var(--text-dim)",
+                  maxWidth: 220,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {lastEvent.message}
+              </span>
+            )}
+          </>
         )}
 
         {publicKey ? (

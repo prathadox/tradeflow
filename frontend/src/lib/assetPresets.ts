@@ -88,15 +88,68 @@ export function presetsForNetwork(
 // the arbitrage strategy without any custom wiring. The backend's
 // pairToBinanceSymbol already translates the quote side (USDC→USDT).
 export interface PairPreset {
-  value: string;
+  id: string;
   label: string;
+  baseCode: string;
+  quoteCode: string;
 }
 
 export const PAIR_PRESETS: PairPreset[] = [
-  { value: "XLM/USDC", label: "XLM / USDC" },
-  { value: "BTC/USDC", label: "BTC / USDC" },
-  { value: "ETH/USDC", label: "ETH / USDC" },
-  { value: "XLM/USDT", label: "XLM / USDT" },
-  { value: "BTC/USDT", label: "BTC / USDT" },
-  { value: "ETH/USDT", label: "ETH / USDT" },
+  { id: "xlm-usdc", label: "XLM / USDC", baseCode: "XLM", quoteCode: "USDC" },
 ];
+
+function findIssuerForCode(
+  code: string,
+  network: "TESTNET" | "PUBLIC" | null
+): string {
+  const want = network === "PUBLIC" ? "public" : "testnet";
+  const upper = code.toUpperCase();
+  if (upper === "XLM" || upper === "NATIVE") return "";
+  const candidates = ASSET_PRESETS.filter(
+    (p) => p.code.toUpperCase() === upper
+  );
+  const preferred =
+    candidates.find((p) => p.network === want) ??
+    candidates.find((p) => p.network === "any") ??
+    candidates[0];
+  return preferred?.issuer ?? "";
+}
+
+function token(code: string, issuer: string): string {
+  const upper = code.toUpperCase();
+  if (upper === "XLM" || upper === "NATIVE") return "XLM";
+  if (!issuer) return code;
+  return `${code}:${issuer}`;
+}
+
+// Turn a PairPreset into a backend-ready pair string, filling in the
+// correct issuer for the connected wallet network. Defaults to testnet
+// when no wallet is connected.
+export function resolvePairPreset(
+  preset: PairPreset,
+  network: "TESTNET" | "PUBLIC" | null
+): string {
+  const baseIssuer = findIssuerForCode(preset.baseCode, network);
+  const quoteIssuer = findIssuerForCode(preset.quoteCode, network);
+  return `${token(preset.baseCode, baseIssuer)}/${token(
+    preset.quoteCode,
+    quoteIssuer
+  )}`;
+}
+
+// Reverse mapping: given an already-resolved pair string, find the matching
+// preset (if any). Used to highlight the active preset in the dropdown.
+export function findPairPresetMatch(pair: string): PairPreset | null {
+  if (!pair) return null;
+  const [baseRaw, quoteRaw] = pair.split("/");
+  if (!baseRaw || !quoteRaw) return null;
+  const baseCode = baseRaw.split(":")[0].trim().toUpperCase();
+  const quoteCode = quoteRaw.split(":")[0].trim().toUpperCase();
+  return (
+    PAIR_PRESETS.find(
+      (p) =>
+        p.baseCode.toUpperCase() === baseCode &&
+        p.quoteCode.toUpperCase() === quoteCode
+    ) ?? null
+  );
+}

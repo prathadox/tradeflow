@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Button from "../../ui/Button";
+import LogoMark from "../../ui/LogoMark";
 
 const linkBase: React.CSSProperties = {
   fontSize: 12.5,
@@ -97,33 +98,11 @@ export default function Nav({ scrolled }: { scrolled: boolean }) {
         <NavLink href="#faq">FAQ</NavLink>
       </nav>
 
-      <Link to="/app">
+      <a href="#waitlist">
         <Button variant="primary" size="sm" style={{ borderRadius: "var(--radius-pill)" }}>
-          Launch app
+          Join waitlist
         </Button>
-      </Link>
+      </a>
     </header>
-  );
-}
-
-export function LogoMark() {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 22,
-        height: 22,
-        borderRadius: 5,
-        background: "var(--text)",
-        color: "var(--bg-canvas)",
-        fontWeight: 800,
-        fontSize: 12,
-        letterSpacing: "-0.5px",
-      }}
-    >
-      F
-    </span>
   );
 }

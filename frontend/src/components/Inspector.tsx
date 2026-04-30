@@ -1,5 +1,5 @@
 import type { ChangeEvent, CSSProperties } from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import { useGraphStore, type FlowNode } from "../store/graphStore";
 import { useWalletStore } from "../store/walletStore";
@@ -8,6 +8,8 @@ import {
   findPresetMatch,
   presetsForNetwork,
   PAIR_PRESETS,
+  findPairPresetMatch,
+  resolvePairPreset,
 } from "../lib/assetPresets";
 import Select, { type SelectOption } from "./Select";
 import Field from "../ui/Field";
@@ -108,6 +110,42 @@ export default function Inspector() {
     );
   }, [node, edges, allNodes]);
 
+  const baseAssetId =
+    (node?.data.params.baseAssetId as string | null | undefined) ?? null;
+  const quoteAssetId =
+    (node?.data.params.quoteAssetId as string | null | undefined) ?? null;
+
+  // Auto-derive base/quote from the first two connected assets and wipe any
+  // stale `pair` string so the two ways of choosing assets can never disagree.
+  useEffect(() => {
+    if (!node) return;
+    if (node.data.kind !== "strategy") return;
+    if (connectedAssets.length === 0) return;
+    const ids = new Set(connectedAssets.map((a) => a.id));
+    const baseValid = baseAssetId && ids.has(baseAssetId) ? baseAssetId : null;
+    const quoteValid =
+      quoteAssetId && ids.has(quoteAssetId) ? quoteAssetId : null;
+    let nextBase = baseValid;
+    let nextQuote = quoteValid;
+    if (!nextBase) {
+      nextBase = connectedAssets.find((a) => a.id !== nextQuote)?.id ?? null;
+    }
+    if (!nextQuote) {
+      nextQuote = connectedAssets.find((a) => a.id !== nextBase)?.id ?? null;
+    }
+    const currentPair = String(node.data.params.pair ?? "");
+    const baseChanged = nextBase !== baseAssetId;
+    const quoteChanged = nextQuote !== quoteAssetId;
+    const pairNeedsWipe = currentPair !== "";
+    if (!baseChanged && !quoteChanged && !pairNeedsWipe) return;
+    updateNodeParams(node.id, {
+      ...node.data.params,
+      baseAssetId: nextBase,
+      quoteAssetId: nextQuote,
+      pair: "",
+    });
+  }, [node, connectedAssets, baseAssetId, quoteAssetId, updateNodeParams]);
+
   if (!node) return null;
 
   const fields: FieldDef[] =
@@ -137,10 +175,8 @@ export default function Inspector() {
     };
 
   const showAssetSelectors =
-    node.data.kind === "strategy" || node.data.nodeType === "trade";
-
-  const baseAssetId = (node.data.params.baseAssetId as string | null | undefined) ?? null;
-  const quoteAssetId = (node.data.params.quoteAssetId as string | null | undefined) ?? null;
+    (node.data.kind === "strategy" || node.data.nodeType === "trade") &&
+    connectedAssets.length > 0;
 
   const assetOptions: SelectOption[] = connectedAssets.map((a) => ({
     value: a.id,
@@ -301,38 +337,55 @@ export default function Inspector() {
           </>
         )}
 
-        {node.data.nodeType === "arbitrage" && (() => {
-          const currentPair = String(node.data.params.pair ?? "");
-          const pairOptions: SelectOption[] = [
-            { value: "__derive__", label: "Derive from connected assets" },
-            ...PAIR_PRESETS.map((p) => ({ value: p.value, label: p.label })),
-          ];
-          const pairValue = currentPair === "" ? "__derive__" : currentPair;
-          return (
-            <Field
-              label="Pair"
-              hint={
-                <>
-                  Pick a ready pair, or choose <b>Derive</b> and wire Asset
-                  nodes to the strategy&rsquo;s left handle for a custom combo.
-                </>
-              }
-              htmlFor="field-pair"
-            >
-              <Select
-                id="field-pair"
-                value={pairValue}
-                options={pairOptions}
-                onChange={(v) => {
-                  updateNodeParams(node.id, {
-                    ...node.data.params,
-                    pair: v === "__derive__" ? "" : v,
-                  });
-                }}
-              />
-            </Field>
-          );
-        })()}
+        {node.data.nodeType === "arbitrage" &&
+          connectedAssets.length === 0 &&
+          (() => {
+            const currentPair = String(node.data.params.pair ?? "");
+            const matchedPreset = findPairPresetMatch(currentPair);
+            const selectedId = matchedPreset?.id ?? "__none__";
+            const pairOptions: SelectOption[] = [
+              { value: "__none__", label: "— pick a pair —" },
+              ...PAIR_PRESETS.map((p) => ({ value: p.id, label: p.label })),
+            ];
+            return (
+              <Field
+                label="Pair"
+                hint={
+                  <>
+                    Pick a ready pair, or drag <b>Asset</b> nodes onto the
+                    canvas and wire them into this strategy for a custom combo.
+                  </>
+                }
+                htmlFor="field-pair"
+              >
+                <Select
+                  id="field-pair"
+                  value={selectedId}
+                  options={pairOptions}
+                  onChange={(v) => {
+                    if (v === "__none__") {
+                      updateNodeParams(node.id, {
+                        ...node.data.params,
+                        pair: "",
+                      });
+                      return;
+                    }
+                    const preset = PAIR_PRESETS.find((p) => p.id === v);
+                    if (!preset) return;
+                    updateNodeParams(node.id, {
+                      ...node.data.params,
+                      pair: resolvePairPreset(
+                        preset,
+                        walletConnected ? walletNetwork : null
+                      ),
+                      baseAssetId: null,
+                      quoteAssetId: null,
+                    });
+                  }}
+                />
+              </Field>
+            );
+          })()}
 
         {fields.length === 0 && !showAssetSelectors && node.data.kind !== "asset" && (
           <div style={{ color: "var(--text-dim)", fontSize: 13, fontStyle: "italic" }}>

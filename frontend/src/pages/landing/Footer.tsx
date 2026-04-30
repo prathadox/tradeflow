@@ -1,3 +1,5 @@
+import LogoMark from "../../ui/LogoMark";
+
 export default function Footer() {
   const year = new Date().getFullYear();
   return (
@@ -28,23 +30,7 @@ export default function Footer() {
             color: "var(--text-muted)",
           }}
         >
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 18,
-              height: 18,
-              borderRadius: 4,
-              background: "var(--text)",
-              color: "var(--bg-canvas)",
-              fontWeight: 800,
-              fontSize: 10,
-              letterSpacing: "-0.5px",
-            }}
-          >
-            F
-          </span>
+          <LogoMark size={18} />
           <span
             style={{
               fontFamily: "var(--font-display)",

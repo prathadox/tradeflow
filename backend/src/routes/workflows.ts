@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 import { Keypair } from "@stellar/stellar-sdk";
 import type { Workflow } from "../../../shared/types.js";
 import * as engine from "../engine/workflowEngine.js";
@@ -195,31 +195,18 @@ workflowsRouter.get("/:id/runs", async (req: Request, res: Response) => {
       stoppedAt: workflowRuns.stoppedAt,
       status: workflowRuns.status,
       errorMessage: workflowRuns.errorMessage,
+      eventCount: sql<number>`coalesce(count(${tickEvents.id}), 0)::int`.as(
+        "event_count"
+      ),
     })
     .from(workflowRuns)
+    .leftJoin(tickEvents, eq(tickEvents.runId, workflowRuns.id))
     .where(eq(workflowRuns.workflowId, id))
+    .groupBy(workflowRuns.id)
     .orderBy(desc(workflowRuns.startedAt))
     .limit(50);
 
-  if (runs.length === 0) return res.json([]);
-
-  const counts = await db
-    .select({
-      runId: tickEvents.runId,
-      count: sql<number>`count(*)::int`.as("count"),
-    })
-    .from(tickEvents)
-    .where(inArray(tickEvents.runId, runs.map((r) => r.id)))
-    .groupBy(tickEvents.runId);
-
-  const countByRun = new Map<string, number>(
-    counts.map((c) => [c.runId, Number(c.count)])
-  );
-  const shaped = runs.map((r) => ({
-    ...r,
-    eventCount: countByRun.get(r.id) ?? 0,
-  }));
-  return res.json(shaped);
+  return res.json(runs);
 });
 
 workflowsRouter.post("/:id/sessions", async (req: Request, res: Response) => {
