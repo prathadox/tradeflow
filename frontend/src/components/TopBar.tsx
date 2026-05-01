@@ -19,6 +19,7 @@ import {
   listWorkflows,
   startWorkflow,
   stopWorkflow,
+  updateWorkflow,
 } from "../api/workflows";
 import { subscribeEvents, type LiveEvent } from "../api/events";
 import type { Workflow } from "@shared/types";
@@ -114,9 +115,7 @@ function deriveStrategyPair(
   const strategy = nodes.find((n) => n.data.kind === "strategy");
   if (!strategy) return null;
   const params = strategy.data.params;
-  const baseId = typeof params.baseAssetId === "string" ? params.baseAssetId : null;
-  const quoteId = typeof params.quoteAssetId === "string" ? params.quoteAssetId : null;
-  const assetLabel = (id: string | null) => {
+  const tokenForNode = (id: string | null) => {
     if (!id) return null;
     const n = nodes.find((m) => m.id === id);
     if (!n) return null;
@@ -126,14 +125,22 @@ function deriveStrategyPair(
     if (code === "XLM" || code === "NATIVE") return "XLM";
     return issuer ? `${code}:${issuer}` : code;
   };
-  const base = assetLabel(baseId);
-  const quote = assetLabel(quoteId);
+  const incoming = edges.filter((e) => e.target === strategy.id);
+  const baseFromWire = incoming.find((e) => e.targetHandle === "base");
+  const quoteFromWire = incoming.find((e) => e.targetHandle === "quote");
+  const base =
+    tokenForNode(baseFromWire?.source ?? null) ??
+    tokenForNode(typeof params.baseAssetId === "string" ? params.baseAssetId : null);
+  const quote =
+    tokenForNode(quoteFromWire?.source ?? null) ??
+    tokenForNode(
+      typeof params.quoteAssetId === "string" ? params.quoteAssetId : null
+    );
   let pair = "";
   if (base && quote) pair = `${base}/${quote}`;
   else if (typeof params.pair === "string") pair = params.pair;
   const notional = Number(params.notional ?? 100);
   const dryRun = Boolean(params.dryRun ?? true);
-  void edges;
   return { pair, notional: Number.isFinite(notional) ? notional : 100, dryRun };
 }
 
@@ -259,13 +266,18 @@ export default function TopBar(_props: {
     setSaving(true);
     try {
       const json = toWorkflowJson({ id, name, nodes, edges });
-      const result = await createWorkflow({
+      const payload = {
         name: json.name,
         nodes: json.nodes,
         edges: json.edges,
-      });
+      };
+      const result = id
+        ? await updateWorkflow(id, payload)
+        : await createWorkflow(payload);
       setId(result.id);
-      toast.success(`Saved · ${result.id.slice(0, 8)}`);
+      toast.success(
+        id ? `Updated · ${result.id.slice(0, 8)}` : `Saved · ${result.id.slice(0, 8)}`
+      );
       await refreshList();
     } catch (err) {
       toast.error(`Save failed: ${(err as Error).message}`);

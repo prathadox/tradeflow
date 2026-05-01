@@ -99,9 +99,10 @@ export function fromWorkflowJson(wf: Workflow): {
       },
     };
   });
-  // Rewrite legacy base/quote edges to use the new unified "assets" handle so
-  // React Flow can resolve them against the redesigned node. (Engine still
-  // tolerates both shapes on the server.)
+  // Strategy nodes now carry distinct base/quote handles, so target handles
+  // are preserved verbatim. Edges saved before this change with a generic
+  // "assets" handle simply land on the strategy's general drop zone — users
+  // can re-wire to the explicit base/quote handle when they reopen.
   const edges: Edge[] = wf.edges.map((e, idx) => {
     const edge: Edge = {
       id: `e-${idx}-${e.source}-${e.target}`,
@@ -109,11 +110,7 @@ export function fromWorkflowJson(wf: Workflow): {
       target: e.target,
     };
     if (e.sourceHandle) edge.sourceHandle = e.sourceHandle;
-    if (e.targetHandle === "base" || e.targetHandle === "quote") {
-      edge.targetHandle = "assets";
-    } else if (e.targetHandle) {
-      edge.targetHandle = e.targetHandle;
-    }
+    if (e.targetHandle) edge.targetHandle = e.targetHandle;
     return edge;
   });
   return { nodes, edges };

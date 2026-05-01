@@ -9,6 +9,10 @@ export interface NodeHandleDef {
   position: Position;
   id?: string;
   size?: "sm" | "md";
+  /** When two handles share an edge, position them with a vertical offset (0..1). */
+  topPercent?: number;
+  label?: string;
+  labelSide?: "left" | "right";
 }
 
 interface BaseNodeProps {
@@ -97,15 +101,36 @@ export default function BaseNode({
         )}
       </div>
 
-      {handles.map((h, i) => (
-        <Handle
-          key={`${h.type}-${h.position}-${h.id ?? i}`}
-          type={h.type}
-          position={h.position}
-          id={h.id}
-          style={handleStyle(selected, h.size)}
-        />
-      ))}
+      {handles.map((h, i) => {
+        const base = handleStyle(selected, h.size);
+        const positioned: CSSProperties =
+          h.topPercent !== undefined
+            ? { ...base, top: `${h.topPercent * 100}%` }
+            : base;
+        return (
+          <span
+            key={`${h.type}-${h.position}-${h.id ?? i}`}
+            style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+          >
+            <Handle
+              type={h.type}
+              position={h.position}
+              id={h.id}
+              style={{ ...positioned, pointerEvents: "auto" }}
+            />
+            {h.label && h.position === Position.Left && (
+              <span
+                style={handleLabelStyle(
+                  h.topPercent ?? 0.5,
+                  h.labelSide ?? "right"
+                )}
+              >
+                {h.label}
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -118,5 +143,25 @@ function handleStyle(selected: boolean, size: "sm" | "md" = "sm"): CSSProperties
     background: "var(--bg-canvas)",
     border: `2px solid ${selected ? "var(--accent)" : "var(--border-strong)"}`,
     transition: "border-color var(--dur-fast), transform var(--dur-fast)",
+  };
+}
+
+function handleLabelStyle(
+  topPercent: number,
+  side: "left" | "right"
+): CSSProperties {
+  const horizontal: CSSProperties =
+    side === "right" ? { left: 14 } : { right: 14 };
+  return {
+    position: "absolute",
+    top: `${topPercent * 100}%`,
+    transform: "translateY(-50%)",
+    fontSize: 9,
+    fontFamily: "var(--font-mono)",
+    color: "var(--text-dim)",
+    letterSpacing: "0.4px",
+    textTransform: "uppercase",
+    pointerEvents: "none",
+    ...horizontal,
   };
 }

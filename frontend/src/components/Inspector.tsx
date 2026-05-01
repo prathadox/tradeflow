@@ -1,16 +1,10 @@
 import type { ChangeEvent, CSSProperties } from "react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { X } from "lucide-react";
 import { useGraphStore, type FlowNode } from "../store/graphStore";
 import { useWalletStore } from "../store/walletStore";
 import { truncateIssuer } from "../nodes/nodeStyles";
-import {
-  findPresetMatch,
-  presetsForNetwork,
-  PAIR_PRESETS,
-  findPairPresetMatch,
-  resolvePairPreset,
-} from "../lib/assetPresets";
+import { findPresetMatch, presetsForNetwork } from "../lib/assetPresets";
 import Select, { type SelectOption } from "./Select";
 import Field from "../ui/Field";
 import Input from "../ui/Input";
@@ -74,6 +68,92 @@ function labelForAsset(n: FlowNode | undefined): string {
   return issuer ? `${code} · ${truncateIssuer(issuer)}` : `${code} · native`;
 }
 
+function WiredPairStatus({
+  base,
+  quote,
+}: {
+  base: FlowNode | null;
+  quote: FlowNode | null;
+}) {
+  const Row = ({ label, node }: { label: string; node: FlowNode | null }) => {
+    const filled = !!node;
+    const code = node ? String(node.data.params.code ?? "").trim() : "";
+    const valueText = node
+      ? code
+        ? labelForAsset(node)
+        : "Asset connected · set a code"
+      : "Wire an Asset node here";
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          padding: "10px 12px",
+          background: "var(--bg-sunken)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-sm)",
+          borderLeft: `2px solid ${filled ? "var(--mint)" : "var(--border-strong)"}`,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            textTransform: "uppercase",
+            letterSpacing: "0.6px",
+            color: "var(--text-muted)",
+            flexShrink: 0,
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontSize: 12,
+            color: filled && code ? "var(--text)" : "var(--text-dim)",
+            fontStyle: filled && code ? "normal" : "italic",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {valueText}
+        </span>
+      </div>
+    );
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div
+        style={{
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.9px",
+          fontWeight: 600,
+          color: "var(--text-muted)",
+        }}
+      >
+        Pair · wired
+      </div>
+      <Row label="base" node={base} />
+      <Row label="quote" node={quote} />
+      <div
+        style={{
+          fontSize: 11,
+          color: "var(--text-dim)",
+          lineHeight: 1.5,
+        }}
+      >
+        Drop two Asset nodes and connect them to the strategy&rsquo;s left
+        handles. The pair is built from those wires — no extra fields.
+      </div>
+    </div>
+  );
+}
+
 export default function Inspector() {
   const selectedNodeId = useGraphStore((s) => s.selectedNodeId);
   const setSelectedNodeId = useGraphStore((s) => s.setSelectedNodeId);
@@ -91,11 +171,9 @@ export default function Inspector() {
     [walletNetwork, walletConnected]
   );
 
-  const connectedAssets = useMemo(() => {
+  const tradeConnectedAssets = useMemo(() => {
     if (!node) return [] as FlowNode[];
-    const acceptsAssets =
-      node.data.kind === "strategy" || node.data.kind === "action";
-    if (!acceptsAssets) return [];
+    if (node.data.nodeType !== "trade") return [];
     const incoming = edges.filter(
       (e) =>
         e.target === node.id &&
@@ -110,41 +188,28 @@ export default function Inspector() {
     );
   }, [node, edges, allNodes]);
 
+  const wiredPair = useMemo(() => {
+    if (!node) return { base: null, quote: null } as {
+      base: FlowNode | null;
+      quote: FlowNode | null;
+    };
+    if (node.data.kind !== "strategy") {
+      return { base: null, quote: null };
+    }
+    const incoming = edges.filter((e) => e.target === node.id);
+    const findHandle = (handle: "base" | "quote"): FlowNode | null => {
+      const edge = incoming.find((e) => e.targetHandle === handle);
+      if (!edge) return null;
+      const src = allNodes.find((n) => n.id === edge.source);
+      return src && src.data.kind === "asset" ? (src as FlowNode) : null;
+    };
+    return { base: findHandle("base"), quote: findHandle("quote") };
+  }, [node, edges, allNodes]);
+
   const baseAssetId =
     (node?.data.params.baseAssetId as string | null | undefined) ?? null;
   const quoteAssetId =
     (node?.data.params.quoteAssetId as string | null | undefined) ?? null;
-
-  // Auto-derive base/quote from the first two connected assets and wipe any
-  // stale `pair` string so the two ways of choosing assets can never disagree.
-  useEffect(() => {
-    if (!node) return;
-    if (node.data.kind !== "strategy") return;
-    if (connectedAssets.length === 0) return;
-    const ids = new Set(connectedAssets.map((a) => a.id));
-    const baseValid = baseAssetId && ids.has(baseAssetId) ? baseAssetId : null;
-    const quoteValid =
-      quoteAssetId && ids.has(quoteAssetId) ? quoteAssetId : null;
-    let nextBase = baseValid;
-    let nextQuote = quoteValid;
-    if (!nextBase) {
-      nextBase = connectedAssets.find((a) => a.id !== nextQuote)?.id ?? null;
-    }
-    if (!nextQuote) {
-      nextQuote = connectedAssets.find((a) => a.id !== nextBase)?.id ?? null;
-    }
-    const currentPair = String(node.data.params.pair ?? "");
-    const baseChanged = nextBase !== baseAssetId;
-    const quoteChanged = nextQuote !== quoteAssetId;
-    const pairNeedsWipe = currentPair !== "";
-    if (!baseChanged && !quoteChanged && !pairNeedsWipe) return;
-    updateNodeParams(node.id, {
-      ...node.data.params,
-      baseAssetId: nextBase,
-      quoteAssetId: nextQuote,
-      pair: "",
-    });
-  }, [node, connectedAssets, baseAssetId, quoteAssetId, updateNodeParams]);
 
   if (!node) return null;
 
@@ -175,10 +240,9 @@ export default function Inspector() {
     };
 
   const showAssetSelectors =
-    (node.data.kind === "strategy" || node.data.nodeType === "trade") &&
-    connectedAssets.length > 0;
+    node.data.nodeType === "trade" && tradeConnectedAssets.length > 0;
 
-  const assetOptions: SelectOption[] = connectedAssets.map((a) => ({
+  const assetOptions: SelectOption[] = tradeConnectedAssets.map((a) => ({
     value: a.id,
     label: labelForAsset(a),
   }));
@@ -337,55 +401,9 @@ export default function Inspector() {
           </>
         )}
 
-        {node.data.nodeType === "arbitrage" &&
-          connectedAssets.length === 0 &&
-          (() => {
-            const currentPair = String(node.data.params.pair ?? "");
-            const matchedPreset = findPairPresetMatch(currentPair);
-            const selectedId = matchedPreset?.id ?? "__none__";
-            const pairOptions: SelectOption[] = [
-              { value: "__none__", label: "— pick a pair —" },
-              ...PAIR_PRESETS.map((p) => ({ value: p.id, label: p.label })),
-            ];
-            return (
-              <Field
-                label="Pair"
-                hint={
-                  <>
-                    Pick a ready pair, or drag <b>Asset</b> nodes onto the
-                    canvas and wire them into this strategy for a custom combo.
-                  </>
-                }
-                htmlFor="field-pair"
-              >
-                <Select
-                  id="field-pair"
-                  value={selectedId}
-                  options={pairOptions}
-                  onChange={(v) => {
-                    if (v === "__none__") {
-                      updateNodeParams(node.id, {
-                        ...node.data.params,
-                        pair: "",
-                      });
-                      return;
-                    }
-                    const preset = PAIR_PRESETS.find((p) => p.id === v);
-                    if (!preset) return;
-                    updateNodeParams(node.id, {
-                      ...node.data.params,
-                      pair: resolvePairPreset(
-                        preset,
-                        walletConnected ? walletNetwork : null
-                      ),
-                      baseAssetId: null,
-                      quoteAssetId: null,
-                    });
-                  }}
-                />
-              </Field>
-            );
-          })()}
+        {node.data.nodeType === "arbitrage" && (
+          <WiredPairStatus base={wiredPair.base} quote={wiredPair.quote} />
+        )}
 
         {fields.length === 0 && !showAssetSelectors && node.data.kind !== "asset" && (
           <div style={{ color: "var(--text-dim)", fontSize: 13, fontStyle: "italic" }}>
@@ -505,10 +523,10 @@ export default function Inspector() {
               />
             </Field>
 
-            {connectedAssets.length === 0 && (
+            {tradeConnectedAssets.length === 0 && (
               <div style={helperStyle}>
                 Connect Asset nodes to the left-side handle to choose base /
-                quote, or pick a Pair above to skip this.
+                quote.
               </div>
             )}
           </div>

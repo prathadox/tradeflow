@@ -92,6 +92,26 @@ workflowsRouter.get("/:id", async (req: Request, res: Response) => {
   return res.json(wf);
 });
 
+workflowsRouter.put("/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const existing = await loadWorkflow(id);
+  if (!existing) return res.status(404).json({ error: "not found" });
+  const parsed = workflowSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  await db
+    .update(workflows)
+    .set({
+      name: parsed.data.name,
+      nodes: parsed.data.nodes,
+      edges: parsed.data.edges,
+      updatedAt: Date.now(),
+    })
+    .where(eq(workflows.id, id));
+  return res.json({ id });
+});
+
 workflowsRouter.delete("/:id", async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const wf = await loadWorkflow(id);

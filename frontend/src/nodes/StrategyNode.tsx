@@ -60,7 +60,22 @@ export default function StrategyNode({ id, data, selected }: NodeProps<FlowNode>
       minWidth={230}
       handles={[
         { type: "target", position: Position.Top, id: "trigger", size: "md" },
-        { type: "target", position: Position.Left, id: "assets" },
+        {
+          type: "target",
+          position: Position.Left,
+          id: "base",
+          topPercent: 0.32,
+          label: "base",
+          labelSide: "right",
+        },
+        {
+          type: "target",
+          position: Position.Left,
+          id: "quote",
+          topPercent: 0.68,
+          label: "quote",
+          labelSide: "right",
+        },
         { type: "source", position: Position.Right },
       ]}
     />

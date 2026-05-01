@@ -48,6 +48,17 @@ export function createWorkflow(
   }).then((r) => handle<{ id: string }>(r));
 }
 
+export function updateWorkflow(
+  id: string,
+  body: CreateWorkflowBody
+): Promise<{ id: string }> {
+  return fetch(`${API_URL}/workflows/${id}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }).then((r) => handle<{ id: string }>(r));
+}
+
 export interface StatusResponse {
   running: boolean;
   startedAt?: number;

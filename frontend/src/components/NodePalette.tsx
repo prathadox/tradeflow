@@ -68,8 +68,6 @@ const ITEMS: PaletteItemWithIcon[] = [
       slippageBps: 20,
       dryRun: true,
       notional: 100,
-      baseAssetId: null,
-      quoteAssetId: null,
     },
   },
   {
